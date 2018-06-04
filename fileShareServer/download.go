@@ -16,8 +16,8 @@ func SendFileToClient(connection net.Conn, filename string) {
 	defer connection.Close()
 
 	// file
-
-	filedir := fmt.Sprintf("./tmp/%v", filename)
+	path, _ := os.Getwd()
+	filedir := fmt.Sprintf("%v/exorades/fileShare/fileShareServer/tmp/%v", path, filename)
 	file, err := os.Open(filedir)
 
 	if err != nil {

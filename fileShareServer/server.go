@@ -51,6 +51,22 @@ func (server Server) initDb() *gorm.DB {
 }
 
 
+//func listFiles() []string {
+//
+//	path, _ := os.Getwd()
+//	fullPath := path + "/exorades/fileShare/fileShareServer/tmp/"
+//	files, err := ioutil.ReadDir(fullPath)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
+//
+//	for _, f := range files {
+//		fmt.Println(f.Name())
+//	}
+//	return files
+//}
+
 func handleCommand(command string, conn net.Conn) {
 	var file string
 
@@ -71,6 +87,7 @@ func handleCommand(command string, conn net.Conn) {
 		SendFileToClient(conn, file)
 	case command == "#list":
 		fmt.Printf("Listing files")
+		//listFiles()
 	default:
 		fmt.Printf("Incorrect command")
 	}
