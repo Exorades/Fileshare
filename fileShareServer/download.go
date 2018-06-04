@@ -8,18 +8,17 @@ import (
 	"strconv"
 	"io"
 )
-
-func sendFileToClient(connection net.Conn) {
+const BUFFERSIZE = 1024
+func SendFileToClient(connection net.Conn, filename string) {
 
 	fmt.Println("A client has connected!")
 
 	defer connection.Close()
 
-	//creating file
+	// file
 
-	//for testing
-
-	f, err := os.Open(os.Args[0])
+	filedir := fmt.Sprintf("src/github.com/exorades/Fileshare/fileShareServer/tmp/%v", filename)
+	file, err := os.Open(filedir)
 
 	if err != nil {
 
@@ -27,23 +26,8 @@ func sendFileToClient(connection net.Conn) {
 
 	}
 
-	defer f.Close()
 
-	nf, err := os.Create("newFile.txt")
-
-	if err != nil {
-
-		log.Fatalln("my program broke creating: ", err.Error())
-
-	}
-
-	nf.Write([]byte("Hello World"))
-
-	file := nf
-
-
-
-	// for testing done
+	// file done
 
 	if err != nil {
 
