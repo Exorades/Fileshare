@@ -3,11 +3,10 @@ package fileShare
 import (
 	"net"
 	"bufio"
-	"log"
-	"strconv"
-	"math/rand"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"strings"
+	"fmt"
 )
 
 
@@ -16,63 +15,30 @@ type Server struct {
 }
 
 
-func (server Server) createRoom(name string, db *gorm.DB) *room {
-	newRoom := room{
-		name: name,
-		outgoing: make(chan message),
-		joining: make(chan *client),
-		shutdown: make(chan struct{}),
-		clients: make([]*client, 0),
-		db: db,
-
-	}
-	newRoom.listen()
-	return &newRoom
-}
-
-
-func (server Server) startRoom(name string) {
-	room := server.createRoom(name, server.initDb())
-
-	listener, err := net.Listen("tcp", server.Address)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for {
-		connection, err := listener.Accept()
-
-		if err != nil {
-			log.Fatal(err)
-		} else {
-			room.addClient(server.createClient(room, connection, strconv.Itoa(rand.Int())))
-		}
-
-	}
-}
-
 
 func (server Server) Start() {
-	server.startRoom("#general")
-}
+	fmt.Println("Launching server...")
+	ln, _ := net.Listen("tcp", "0.0.0.0:6000")
 
 
-func (server Server) createClient(room *room, connection net.Conn, userName string) *client {
-	newClient := client{
-		name: userName,
-		room: room,
-		reader: bufio.NewReader(connection),
-		writer: bufio.NewWriter(connection),
-		connection: connection,
+	for {
+		conn, _ := ln.Accept()
+		go handle(conn)
 	}
-
-	go newClient.read()
-	return &newClient
 }
 
 
-
+func handle(conn net.Conn) {
+	for {
+		message, _ := bufio.NewReader(conn).ReadString('\n')
+		message = string(message)
+		if message == "" {
+			return
+		}
+		fmt.Print("Message Received: ", message)
+		handleCommand(message, conn)
+	}
+}
 
 
 func (server Server) initDb() *gorm.DB {
@@ -83,3 +49,32 @@ func (server Server) initDb() *gorm.DB {
 	db.AutoMigrate(&command{})
 	return db
 }
+
+
+func handleCommand(command string, conn net.Conn) {
+	var file string
+
+	msg := strings.TrimSpace(command)
+
+	words := strings.Fields(msg)
+	command = words[0]
+	length := len(words)
+	if length == 2 {
+		file = words[1]
+	}
+
+	switch {
+	case command == "#upload":
+		fmt.Printf("Uploading file %v", file)
+	case command == "#download":
+		fmt.Printf("Downloading file %v", file)
+		SendFileToClient(conn, file)
+	case command == "#list":
+		fmt.Printf("Listing files")
+	default:
+		fmt.Printf("Incorrect command")
+	}
+
+	conn.Write([]byte(command + "" + file + "\n"))
+}
+
