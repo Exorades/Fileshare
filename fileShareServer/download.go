@@ -11,7 +11,7 @@ import (
 const BUFFERSIZE = 1024
 func SendFileToClient(connection net.Conn, filename string) {
 
-	fmt.Println("A client has connected!")
+	fmt.Println("/n A client has connected!")
 
 	defer connection.Close()
 

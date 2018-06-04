@@ -7,6 +7,9 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"strings"
 	"fmt"
+	"os"
+	"io/ioutil"
+	"log"
 )
 
 
@@ -51,21 +54,24 @@ func (server Server) initDb() *gorm.DB {
 }
 
 
-//func listFiles() []string {
-//
-//	path, _ := os.Getwd()
-//	fullPath := path + "/exorades/fileShare/fileShareServer/tmp/"
-//	files, err := ioutil.ReadDir(fullPath)
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//
-//
-//	for _, f := range files {
-//		fmt.Println(f.Name())
-//	}
-//	return files
-//}
+func listFiles() []string {
+
+	path, _ := os.Getwd()
+	fullPath := path + "/exorades/fileShare/fileShareServer/tmp/"
+	files, err := ioutil.ReadDir(fullPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var fileNames []string
+
+	for _, f := range files {
+		fileNames = append(fileNames, f.Name())
+	}
+
+
+	return fileNames
+}
 
 func handleCommand(command string, conn net.Conn) {
 	var file string
@@ -87,11 +93,14 @@ func handleCommand(command string, conn net.Conn) {
 		SendFileToClient(conn, file)
 	case command == "#list":
 		fmt.Printf("Listing files")
-		//listFiles()
+		listOfFileNames := listFiles()
+
+		fileNames := strings.Join(listOfFileNames[:], " ")
+		conn.Write([]byte(fileNames + "\n"))
+
 	default:
 		fmt.Printf("Incorrect command")
 	}
 
-	conn.Write([]byte(command + "" + file + "\n"))
 }
 
