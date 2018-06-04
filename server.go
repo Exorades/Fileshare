@@ -19,11 +19,7 @@ func handleMessage(msg string, conn net.Conn) {
 	conn.Write([]byte(newCommand + "\n"))
 }
 
-func main() {
-	fmt.Println("Launching server...")
-	ln, _ := net.Listen("tcp", ":8081")
-	conn, _ := ln.Accept()
-
+func handle(conn net.Conn) {
 	for {
 		message, _ := bufio.NewReader(conn).ReadString('\n')
 		message = string(message)
@@ -32,5 +28,14 @@ func main() {
 		}
 		fmt.Print("Message Received: ", message)
 		handleMessage(message, conn)
+	}
+}
+
+func main() {
+	fmt.Println("Launching server...")
+	ln, _ := net.Listen("tcp", ":8081")
+	for {
+		conn, _ := ln.Accept()
+		go handle(conn)
 	}
 }
