@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/user"
 	"strconv"
 	"strings"
 )
@@ -47,9 +46,11 @@ func main() {
 		fmt.Print("Text to send: ")
 		text, _ := reader.ReadString('\n')
 		if strings.HasPrefix(text, "#download") {
+			conn.Write([]byte(text))
 			saveFile(conn)
 		} else if strings.HasPrefix(text, "#upload") {
-			SendFileToServer(conn, strings.TrimSpace(text))
+			conn.Write([]byte(text))
+			SendFileToClient(conn, strings.TrimSpace(text)[8:])
 		} else {
 			conn.Write([]byte(text))
 			message, _ := bufio.NewReader(conn).ReadString('\n')
@@ -58,32 +59,94 @@ func main() {
 	}
 }
 
-func SendFileToServer(connection net.Conn, filedest string) {
-	fmt.Println(" A client has connected!")
+func SendFileToClient(connection net.Conn, filename string) {
+
+	fmt.Println("/n A client has connected!")
+
 	defer connection.Close()
-	usr, err := user.Current()
+
+	// file
+	// path, _ := os.Getwd()
+	file, err := os.Open(filename)
+
 	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(usr.HomeDir + "/")
-	filedir := fmt.Sprintf("%v/%v", usr.HomeDir, filedest)
-	file, err := os.Open(filedir)
-	if err != nil {
+
 		log.Fatalln("my program broke opening: ", err.Error())
+
 	}
+
+	// file done
+
 	if err != nil {
+
 		fmt.Println(err)
+
 		return
+
 	}
+
+	fileInfo, err := file.Stat()
+
+	if err != nil {
+
+		fmt.Println(err)
+
+		return
+
+	}
+
+	fileSize := fillString(strconv.FormatInt(fileInfo.Size(), 10), 10)
+
+	fileName := fillString(fileInfo.Name(), 64)
+
+	fmt.Println("Sending filename and filesize!")
+
+	connection.Write([]byte(fileSize))
+
+	connection.Write([]byte(fileName))
+
 	sendBuffer := make([]byte, BUFFERSIZE)
+
 	fmt.Println("Start sending file!")
+
 	for {
+
 		_, err = file.Read(sendBuffer)
+
 		if err == io.EOF {
+
 			break
+
 		}
+
 		connection.Write(sendBuffer)
+
 	}
+
 	fmt.Println("File has been sent, closing connection!")
+
 	return
+
+}
+
+func fillString(retunString string, toLength int) string {
+
+	for {
+
+		lengtString := len(retunString)
+
+		if lengtString < toLength {
+
+			retunString = retunString + ":"
+
+			continue
+
+		}
+
+		break
+
+	}
+
+	return retunString
+
 }
